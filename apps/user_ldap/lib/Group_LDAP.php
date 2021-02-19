@@ -290,10 +290,10 @@ class Group_LDAP extends BackendUtility implements GroupInterface, IGroupLDAP, I
 		$seen[$dnGroup] = 1;
 		$members = $this->access->readAttribute($dnGroup, $this->access->connection->ldapGroupMemberAssocAttr);
 		if (is_array($members)) {
-			$fetcher = function ($memberDN, &$seen) {
+			$fetcher = function ($memberDN) use (&$seen) {
 				return $this->_groupMembers($memberDN, $seen);
 			};
-			$allMembers = $this->walkNestedGroups($dnGroup, $fetcher, $members);
+			$allMembers = $this->walkNestedGroups($dnGroup, $fetcher, $members, $seen);
 		}
 
 		$allMembers += $this->getDynamicGroupMembers($dnGroup);
@@ -335,7 +335,7 @@ class Group_LDAP extends BackendUtility implements GroupInterface, IGroupLDAP, I
 		return $this->filterValidGroups($groups);
 	}
 
-	private function walkNestedGroups(string $dn, Closure $fetcher, array $list): array {
+	private function walkNestedGroups(string $dn, Closure $fetcher, array $list, array &$seen): array {
 		$nesting = (int)$this->access->connection->ldapNestedGroups;
 		// depending on the input, we either have a list of DNs or a list of LDAP records
 		// also, the output expects either DNs or records. Testing the first element should suffice.
@@ -361,7 +361,7 @@ class Group_LDAP extends BackendUtility implements GroupInterface, IGroupLDAP, I
 				// Prevent loops
 				continue;
 			}
-			$fetched = $fetcher($record, $seen);
+			$fetched = $fetcher($record);
 			$list = array_merge($list, $fetched);
 			$seen[$recordDN] = $record;
 		}
