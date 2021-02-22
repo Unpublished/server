@@ -3,9 +3,6 @@ name: PHPUnit
 on:
   pull_request:
   push:
-    branches:
-      - master
-      - stable*
 
 jobs:
   phpunit-oci8:
